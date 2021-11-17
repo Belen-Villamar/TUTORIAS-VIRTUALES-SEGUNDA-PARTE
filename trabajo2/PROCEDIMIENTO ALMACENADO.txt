@@ -1,0 +1,29 @@
+--Un procedimiento almacenado que reciba como parámetro el nombre de un profesor
+--y muestre todos los estudiantes que ha tenido.
+
+CREATE or replace FUNCTION public."alumno"( nombre_profesor text)  
+RETURNS TABLE( nombre text)
+ AS
+$$
+declare
+	registro record;
+begin
+FOR registro IN
+SELECT 
+ estudiante.nombre_estudiante  || ' ' ||  estudiante.apellido_estudiante as nombres
+FROM 
+  public.estudiante, 
+  public.tutor, 
+  public.empresa
+WHERE 
+  estudiante.id_empresa = empresa.id_empresa AND
+  tutor.id_empresa = empresa.id_empresa and  
+tutor.nombre_tutor =$1 
+loop
+  nombre := registro.nombres;
+    RETURN NEXT;
+    END LOOP;
+    RETURN;	
+  end;$$
+ LANGUAGE plpgsql ;
+select*from alumno('Carlos')

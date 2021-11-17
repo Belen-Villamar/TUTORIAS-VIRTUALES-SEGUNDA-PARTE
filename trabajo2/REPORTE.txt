@@ -1,0 +1,12 @@
+--Un reporte en barras de la cantidad de cursos por tutor
+SELECT 
+CONCAT (nombre_tutor,' ',apellido_tutor),
+sala_tutoria, 
+COUNT (TITULO_TUTORIA)
+FROM 
+TUTORIA 
+INNER JOIN tutor  on tutoria.id_tutor=tutor.id_tutor
+group by 
+nombre_tutor,
+sala_tutoria,
+apellido_tutor

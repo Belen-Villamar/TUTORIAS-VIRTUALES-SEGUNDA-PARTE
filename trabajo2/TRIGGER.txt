@@ -1,0 +1,219 @@
+--En un campo en la tabla tutor llamado "numerotutorias", hacer que el campo se incremente cada vez que
+--el tutor ha concluido de dar una tutoría 
+
+CREATE OR REPLACE FUNCTION public.tutoria()
+  RETURNS trigger AS
+$BODY$
+DECLARE
+tipo text;
+ tutor_ integer;
+ tutor_1 integer;
+ tutor_dele integer;
+cantidad_es integer;
+cantidad_2 integer;
+
+  BEGIN
+IF (TG_OP = 'INSERT') THEN
+SELECT 
+  descripcion_tutoria.fin_tutoria into tipo
+FROM 
+  public.descripcion_tutoria
+  where descripcion_tutoria.id_descripciontutoria= new.id_descripciontutoria;
+    if(tipo!='finalizada')then
+return new;
+     end if;
+ 
+ SELECT 
+  tutor.id_tutor into tutor_
+ FROM 
+  public.descripcion_tutoria, 
+  public.tutoria, 
+  public.tutor
+WHERE 
+  tutoria.id_tutorias = new.id_tutorias AND
+  tutoria.id_tutor = tutor.id_tutor;
+
+SELECT 
+  tutor.numero_tutorias into cantidad_es
+FROM 
+  public.descripcion_tutoria, 
+  public.tutoria, 
+  public.tutor
+WHERE 
+  tutoria.id_tutorias = new.id_tutorias AND
+  tutoria.id_tutor = tutor.id_tutor;
+
+  UPDATE tutor
+SET numero_tutorias= cantidad_es+1
+WHERE  tutor.id_tutor = tutor_;
+RETURN NEW;
+  END IF;
+
+IF (TG_OP = 'UPDATE') THEN
+ SELECT 
+  descripcion_tutoria.fin_tutoria into tipo
+FROM 
+  public.descripcion_tutoria
+  where descripcion_tutoria.id_descripciontutoria= new.id_descripciontutoria;
+   
+    if(tipo!='finalizada')then
+return new;
+     end if;
+ 
+ SELECT 
+  tutor.id_tutor into tutor_
+ FROM 
+  public.descripcion_tutoria, 
+  public.tutoria, 
+  public.tutor
+WHERE 
+  tutoria.id_tutorias = old.id_tutorias AND
+  tutoria.id_tutor = tutor.id_tutor;
+  
+SELECT 
+  tutor.numero_tutorias into cantidad_es
+FROM 
+  public.descripcion_tutoria, 
+  public.tutoria, 
+  public.tutor
+WHERE 
+  tutoria.id_tutorias = old.id_tutorias AND
+  tutoria.id_tutor = tutor.id_tutor;
+  
+SELECT 
+  tutor.id_tutor into tutor_1
+FROM 
+  public.descripcion_tutoria, 
+  public.tutoria, 
+  public.tutor
+WHERE 
+  tutoria.id_tutorias = new.id_tutorias AND
+  tutoria.id_tutor = tutor.id_tutor;
+  
+SELECT 
+  tutor.numero_tutorias into cantidad_2
+FROM 
+  public.descripcion_tutoria, 
+  public.tutoria, 
+  public.tutor
+WHERE 
+  tutoria.id_tutorias = new.id_tutorias AND
+  tutoria.id_tutor = tutor.id_tutor;
+  
+ UPDATE tutor
+SET numero_tutorias= cantidad_es-1
+WHERE  tutor.id_tutor = tutor_;
+
+UPDATE tutor
+SET numero_tutorias= cantidad_2+1
+WHERE  tutor.id_tutor = tutor_1;
+RETURN NEW;
+END IF;
+    IF (TG_OP = 'DELETE') THEN
+
+SELECT 
+  fin_tutoria into tipo
+  FROM 
+  public.descripcion_tutoria
+  where id_descripciontutoria= old.id_descripciontutoria;
+    
+    if(tipo!='finalizada')then
+return new;
+     end if;
+
+ SELECT 
+  tutor.id_tutor into tutor_
+ 
+FROM 
+  public.descripcion_tutoria, 
+  public.tutoria, 
+  public.tutor
+WHERE 
+  tutoria.id_tutorias = old.id_tutorias AND
+  tutoria.id_tutor = tutor.id_tutor;
+ 
+SELECT 
+  tutor.numero_tutorias into cantidad_es
+FROM 
+  public.descripcion_tutoria, 
+  public.tutoria, 
+  public.tutor
+WHERE 
+  tutoria.id_tutorias = old.id_tutorias AND
+  tutoria.id_tutor = tutor.id_tutor;
+  
+ UPDATE tutor
+SET numero_tutorias= cantidad_es-1
+WHERE  tutor.id_tutor = tutor_;
+RETURN old;
+
+END IF;
+end;
+$BODY$
+  
+  LANGUAGE plpgsql;
+Create  trigger tutoria_detalle before delete or update
+on descripcion_tutoria
+for each row execute  procedure tutoria();
+
+CREATE OR REPLACE FUNCTION public.tutoria_delete()
+ RETURNS trigger AS
+$BODY$
+DECLARE
+tipo text;
+ tutor_ integer;
+ tutor_dele integer;
+cantidad_es integer;
+BEGIN
+IF (TG_OP = 'INSERT') THEN
+
+SELECT 
+  descripcion_tutoria.fin_tutoria into tipo
+FROM 
+  public.descripcion_tutoria
+  where descripcion_tutoria.id_descripciontutoria= new.id_descripciontutoria;
+    if(tipo!='finalizada')then
+return new;
+     end if;
+ SELECT 
+  tutor.id_tutor into tutor_
+ FROM 
+  public.descripcion_tutoria, 
+  public.tutoria, 
+  public.tutor
+WHERE 
+  tutoria.id_tutorias = new.id_tutorias AND
+  tutoria.id_tutor = tutor.id_tutor;
+
+SELECT 
+  tutor.numero_tutorias into cantidad_es
+ FROM 
+  public.descripcion_tutoria, 
+  public.tutoria, 
+  public.tutor
+ WHERE 
+  tutoria.id_tutorias = new.id_tutorias AND
+  tutoria.id_tutor = tutor.id_tutor;
+
+ UPDATE tutor
+SET numero_tutorias= cantidad_es+1
+WHERE  tutor.id_tutor = tutor_;
+RETURN NEW;
+  END IF;
+end;
+$BODY$
+  LANGUAGE plpgsql;
+
+Create  trigger tutoria_detalle_elimi after insert
+on descripcion_tutoria
+for each row execute  procedure tutoria_delete();
+
+--Datos
+insert into descripcion_tutoria(id_descripciontutoria, id_tutorias, estado_tutoria, nivel_satisfaccion_tutoria, fin_tutoria)values 
+('210','150','aceptado','satisfactorio','finalizada');
+
+UPDATE descripcion_tutoria
+SET id_tutorias= '151'
+WHERE  id_descripciontutoria= '210';
+
+DELETE FROM descripcion_tutoria WHERE id_descripciontutoria = '210'

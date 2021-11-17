@@ -1,0 +1,39 @@
+--Un cursor que muestre por año y mes cuanto la empresa ha pagado en tutorías a profesores,
+--cuanto ha recibido de los estudiantes, y cuál es la utilidad.
+       
+    do 
+	$$
+	DECLARE 
+	datos RECORD;
+	cur_datos  cursor for SELECT 
+	sum(medio.costo_medio) as pagoatutor, 
+	extract (year from tutoria.fecha_tutoria) as año, 
+	extract (month from tutoria.fecha_tutoria) as mes, 
+	sum(tutoria.costo_tutoria) as pagodeestudiantes,
+	sum( tutoria.costo_tutoria) - sum(medio.costo_medio) as utilidad
+FROM 
+	tutoria
+	inner join medio on tutoria.id_medios = medio.id_medios
+	GROUP BY
+	extract (year from tutoria.fecha_tutoria), 
+	extract (month from tutoria.fecha_tutoria),
+	tutoria.costo_tutoria;
+
+     BEGIN	
+        OPEN cur_datos;
+		FETCh cur_datos INTO datos;
+		while (found) loop 
+		RAISE NOTICE 
+		'
+		AÑO: % 
+		MES: % 
+		PAGO TUTORIA A PROFESORES: % 
+		PAGO ESTUDIANTES: % 
+		UTILIDAD: % 
+		',
+		datos.año, datos.mes, datos.pagoatutor, 
+		datos.pagodeestudiantes, datos.utilidad;
+		FETCh cur_datos INTO datos;
+	end loop;	
+	end $$
+	Language 'plpgsql'; 
